@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.cache/
+.artifacts/
+test-evidence/
+dist/
+runtime/
+*.sqlite3
+*.sqlite3-*
+server-errors.log
+private/

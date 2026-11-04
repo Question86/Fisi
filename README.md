@@ -47,5 +47,5 @@ Andere Workspaces und Traineraktionen bleiben serverseitig gesperrt.
 
 [Architektur](ARCHITECTURE.md), [Tests](TESTING.md), [Erweitern](EXTENDING.md),
 [Beiträge](CONTRIBUTING.md), [Sicherheitsmeldung](SECURITY.md) und
-[Komponenten/Rechte](THIRD_PARTY_NOTICES.md). Anwendungslizenz: **UNLICENSED**.
+[Komponenten/Rechte](THIRD_PARTY_NOTICES.md). Anwendungslizenz: **MIT**.
 Der Quellbaum enthält keine Werkfaden-Arbeitsräume, Lernstandsdateien oder echten Inventare.
