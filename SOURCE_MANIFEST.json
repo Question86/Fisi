@@ -1,6 +1,7 @@
 {
   "schema": "fisi-file-manifest/v1",
   "files": {
+    ".gitattributes": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da",
     ".github/workflows/ci.yml": "c3a347a1f22895b1413b375b32543af4fafdad279c9b080b4640f63725ddc8ef",
     ".github/workflows/publish.yml": "2f093838357ee4e4d3400041634af23c465712a81fd715bf16194b793cc989f5",
     ".gitignore": "1a1402afff7b806e2f6cb4b9612137c4f3ef41e302259bb1cadd3e0d7c252ff9",
@@ -13,7 +14,7 @@
     "domain.py": "f1e25ae42dd3fba00bba5df67a3c81c154091b7e0ce34553d3b1a9ec706774ba",
     "EXTENDING.md": "b256ec1af62be5995f30e5ad3279b3cf7d38806413342dc6b71c39bb18d189e5",
     "fisi_app.py": "3abf976cc4748111888c789653a1db47a8c67e99bff0bf5db69f9b59283cc37f",
-    "fisi_delivery.py": "960f0f5c4729c1245891753d12885cab20603064bcd533ae25828d5f0d9ca341",
+    "fisi_delivery.py": "52d6ebc5df904b8c467afdd42b21628aebef77a08dae2e2a6c57008ef953e9c9",
     "fisi_inventory.py": "aa1a37b22c91d7b9be4cb24717451999375abe2ab414b2d070870d032e5fcb9e",
     "fisi_lab.py": "409b3ead522d3d2dbebce8007dfc2a9bbc9fc55e6e3a6f7ada9e4146d2a21fe7",
     "fisi_store.py": "d4b806a4a6b1376b38b10c650cba67b935b7a8114b9782d8c14c745dd1fcab2f",
@@ -32,10 +33,10 @@
     "static/fisi.js": "e999fb2429be75160858386e0d2ea92d99bb6c08004c7a70c81d1c54c7eccbff",
     "static/index.html": "d6759cb70e138ff000224241a834336109ae66bcffb6f73e90f5cb4fb3c64cf7",
     "test_fisi.py": "b96c18adf8fcc331d285ec01e9dfb012944fb4b69fc6756b23c1e84bbc86a37f",
-    "test_fisi_release.py": "66f391b6ce8a9f16395ecc16725bc905561d4eb6180640ad2d912bc2018b5a92",
-    "test_simulator.py": "e5cd85987f7bb8cd0a0631d1365d4bd9dc4cb6bd1eafaa605767384ea14e523c",
+    "test_fisi_release.py": "9c896a905bbeaabafcb8759c0e252146b56b4486f7203a210d14102d3690262c",
+    "test_simulator.py": "3c983b5ff1239f8e05713a2fa09e5056f8e9ceb12ab65349ec20ca2c7cb2a819",
     "TESTING.md": "23415b1832f6f3539f193cfa70adbed9678b6d36730ab29c395df3864abf6a1c",
     "THIRD_PARTY_NOTICES.md": "59d2447acdeca342fe4020f50e50de44bf6dea0ad83ff70b4b2e6b2669e88c52",
-    "ui.py": "2bda01e667863555f8ec4ffe5ac64b1a1cfbaab9fb56705ed9ab0ee0a0c4e877"
+    "ui.py": "5cf5703d9303cd987818843c96cd93959605211e2c326f4054e781d0d4e3f470"
   }
 }

@@ -1560,6 +1560,16 @@ class HTTPTests(unittest.TestCase):
             self.assertEqual(response.read(),(Path(__file__).parent/'static'/'client.js').read_bytes())
         self.assertEqual(self.request('/api/state',token=self.trainer),before)
 
+    def test_client_asset_preserves_lf_and_crlf_bytes_over_real_http(self):
+        import ui
+        fixture=Path(self.temp.name)/'newline-client.js'
+        for newline in ('\n','\r\n'):
+            raw=("'use strict';"+newline+"// Größenprüfung"+newline).encode('utf-8')
+            fixture.write_bytes(raw)
+            with patch.object(ui,'CLIENT_SCRIPT_PATH',fixture):
+                with urllib.request.urlopen(self.url+'/static/client.js',timeout=5) as response:
+                    self.assertEqual(response.read(),raw)
+
     def test_client_asset_route_does_not_expose_files_or_bypass_host_origin_checks(self):
         before=self.request('/api/state',token=self.trainer)
         for path in ('/static/', '/static/server.py', '/static/../server.py',

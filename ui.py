@@ -5,7 +5,7 @@ CLIENT_SCRIPT_PATH = Path(__file__).with_name("static") / "client.js"
 
 def client_script():
     """Read the single packaged client; request paths never select a file."""
-    return CLIENT_SCRIPT_PATH.read_text(encoding="utf-8")
+    return CLIENT_SCRIPT_PATH.read_bytes().decode("utf-8")
 
 PAGE = r'''<!doctype html>
 <html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nordlicht · Cloud Campus</title>

@@ -366,6 +366,7 @@ Die CI und das tatsächliche Testprotokoll des jeweiligen Releases sind maßgebl
 
 Keine fehlende Prüfung durch ein Beispielbild oder eine syntaktisch gültige Datei ersetzen.
 ''',
+        '.gitattributes':'* -text\n',
         '.gitignore':'''__pycache__/
 *.pyc
 .cache/

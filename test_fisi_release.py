@@ -214,6 +214,16 @@ class ReleaseTests(unittest.TestCase):
         self.assertIn('href="/static/fisi.css"',(public/'static/index.html').read_text(encoding='utf-8'))
         self.assertIn(':root',(public/'static/fisi.css').read_text(encoding='utf-8'))
 
+    def test_source_manifest_survives_git_checkout_with_windows_newline_setting(self):
+        if not shutil.which('git'):self.skipTest('Git is required for an actual checkout conversion regression.')
+        delivery.export(self.source,self.root/'git-export',license_name='MIT',windows=False)
+        public=self.root/'git-export/Source'
+        for args in (('init',),('config','core.autocrlf','true'),('add','.')):
+            subprocess.run(['git','-C',str(public),*args],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        checkout=self.root/'fresh-checkout';checkout.mkdir()
+        subprocess.run(['git','-C',str(public),'checkout-index','--all','--prefix',str(checkout).replace('\\','/')+'/'],check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        verify_manifest(checkout,'SOURCE_MANIFEST.json')
+
     def test_windows_fixture_has_declared_assets_runtime_notice_and_checksums(self):
         fake=self.root/'synthetic-runtime-never-executed';(fake/'DLLs').mkdir(parents=True);(fake/'Lib').mkdir()
         stem=f'python{sys.version_info.major}{sys.version_info.minor}'
