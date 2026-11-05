@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
+import {EventEmitter} from 'node:events';
 
 function revisionExpression() {
   return `(()=>{const match=document.querySelector('.footer').textContent.match(/Workspace-Version ([0-9]+)/);if(!match)throw Error('Workspace revision missing from rendered footer');return Number(match[1]);})()`;
@@ -14,6 +15,14 @@ if(process.argv[2]==='--self-check') {
   }
   assert.throws(()=>vm.runInNewContext(revisionExpression(),{document:{querySelector:()=>({textContent:'missing revision'})}}),/revision missing/);
   console.log('PASS serialized browser revision expression, including zero and missing-value rejection');
+  for(const signal of [false,true]) {
+    const child=Object.assign(new EventEmitter(),{exitCode:null,signalCode:null});
+    child.kill=()=>queueMicrotask(()=>{child.exitCode=signal?null:0;child.signalCode=signal?'SIGTERM':null;child.emit('exit',child.exitCode,child.signalCode);});
+    await stop(child);
+    child.kill=()=>assert.fail('Already stopped child must not be killed again');
+    await stop(child);
+  }
+  console.log('PASS owned child lifecycle acknowledges normal and signal exit');
   process.exit(0);
 }
 
@@ -51,10 +60,13 @@ async function startServer(port=0) {
   return {child,base};
 }
 async function stop(child) {
-  if(!child||child.exitCode!==null)return;
-  const ended=new Promise(resolve=>child.once('exit',resolve)); child.kill();
-  await Promise.race([ended,delay(5000)]);
-  assert.notEqual(child.exitCode,null,'owned child process stopped');
+  if(!child||child.exitCode!==null||child.signalCode!==null)return;
+  await new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{child.off('exit',ended);reject(Error('Owned child process did not stop within five seconds'));},5000);
+    function ended(){clearTimeout(timer);resolve();}
+    child.once('exit',ended);child.kill();
+  });
+  assert(child.exitCode!==null||child.signalCode!==null,'owned child process stopped');
 }
 async function evaluate(session,expression) {
   const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true},session);
