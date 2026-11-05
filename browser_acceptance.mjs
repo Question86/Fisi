@@ -3,6 +3,19 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
+
+function revisionExpression() {
+  return `(()=>{const match=document.querySelector('.footer').textContent.match(/Workspace-Version ([0-9]+)/);if(!match)throw Error('Workspace revision missing from rendered footer');return Number(match[1]);})()`;
+}
+if(process.argv[2]==='--self-check') {
+  for(const [text,expected] of [['Workspace-Version 0 · Aktualisieren',0],['Fisi · Workspace-Version 123 · Sitzung wechseln',123]]) {
+    assert.equal(vm.runInNewContext(revisionExpression(),{document:{querySelector:()=>({textContent:text})}}),expected);
+  }
+  assert.throws(()=>vm.runInNewContext(revisionExpression(),{document:{querySelector:()=>({textContent:'missing revision'})}}),/revision missing/);
+  console.log('PASS serialized browser revision expression, including zero and missing-value rejection');
+  process.exit(0);
+}
 
 const source = path.resolve(process.argv[2] || '.');
 const output = path.resolve(process.argv[3] || path.join(source,'..','Fisi browser evidence'));
@@ -73,11 +86,19 @@ async function fill(session,selector,value) {
 async function select(session,selector,value) {
   await evaluate(session,`(()=>{const element=document.querySelector(${JSON.stringify(selector)});element.value=${JSON.stringify(value)};element.dispatchEvent(new Event('input',{bubbles:true}));element.dispatchEvent(new Event('change',{bubbles:true}));})()`);
 }
-async function revision(session) { return await evaluate(session,`Number(document.querySelector('.footer').textContent.match(/Workspace-Version (\d+)/)[1])`); }
+async function revision(session) { return await evaluate(session,revisionExpression()); }
 async function saved(session,fn) { const before=await revision(session);await fn();await until(async()=>await revision(session)>before,'server revision after save'); }
 async function navigate(session,view) { await click(session,`.sidebar [data-route="${view}"]`);await until(()=>evaluate(session,`Boolean(document.querySelector('.sidebar [data-route="${view}"].active'))`),'navigation '+view); }
 async function upload(session,selector,files) { const doc=await send('DOM.getDocument',{},session);const node=await send('DOM.querySelector',{nodeId:doc.root.nodeId,selector},session);assert(node.nodeId);await send('DOM.setFileInputFiles',{nodeId:node.nodeId,files},session); }
-async function screenshot(session,name) { const metrics=await send('Page.getLayoutMetrics',{},session);const size=metrics.cssContentSize;const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:Math.min(size.width,1600),height:Math.min(size.height,6000),scale:1}},session);const file=path.join(output,name);await fs.writeFile(file,Buffer.from(shot.data,'base64'));evidence.screenshots.push(file); }
+async function screenshot(session,name) {
+  const metrics=await send('Page.getLayoutMetrics',{},session),size=metrics.cssContentSize;
+  const clip={x:0,y:0,width:Math.min(size.width,1600),height:Math.min(size.height,6000),scale:1};
+  const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip},session);
+  const file=path.join(output,name);await fs.writeFile(file,Buffer.from(shot.data,'base64'));evidence.screenshots.push(file);
+  // These four captures precede creation of group codes and contain only synthetic fixtures.
+  const preview=await send('Page.captureScreenshot',{format:'jpeg',quality:65,captureBeyondViewport:true,clip:{...clip,height:Math.min(clip.height,1200),scale:0.75}},session);
+  console.log('FISI_REVIEW_IMAGE',name.replace('.png','.jpg'),preview.data);
+}
 function pass(name){evidence.checks.push({name,passed:true});console.log('PASS',name);}
 try {
   server=await startServer();
@@ -182,6 +203,16 @@ try {
   await send('Page.navigate',{url:'about:blank'},one);await until(()=>evaluate(one,`location.href==='about:blank'&&!document.querySelector('.sidebar')`),'fresh group document');
   await send('Page.navigate',{url:server.base+'/#join='+encodeURIComponent(code)},one);await ready(one);await navigate(one,'progress');
   assert.equal(await evaluate(one,`document.querySelector('[data-draft="journal"]').value`),'Entwurf A bleibt erhalten');pass('Actual process restart preserves solo progress and persisted shared join code/state');
+  const reference=await page(server.base,code);
+  await send('Page.navigate',{url:server.base+'/reference/'},reference);
+  await until(()=>evaluate(reference,`Boolean(document.querySelector('#login input[name="code"]'))`),'reference login rendered by extracted script');
+  await fill(reference,'#login input[name="code"]',code);await fill(reference,'#login input[name="name"]','Referenz-Smoke');
+  await click(reference,'#login button[type="submit"], #login button');
+  await until(()=>evaluate(reference,`Boolean(document.querySelector('.sidebar [data-page="overview"]'))&&!busy`),'authenticated reference view');
+  await click(reference,'.sidebar [data-page="resources"]');
+  await until(()=>evaluate(reference,`Boolean(document.querySelector('.sidebar [data-page="resources"].active'))`),'reference resources navigation');
+  assert(await evaluate(reference,`document.querySelector('main.page').textContent.length>200`));
+  pass('Extracted Northlight reference script renders login, authenticated overview and resource navigation');
   for(const record of events.values()) {evidence.errors.push(...record.errors);evidence.network.push(...record.requests.filter(url=>!url.startsWith('data:')&&!url.startsWith('blob:')&&url!=='about:blank'));}
   assert.equal(evidence.errors.length,0,JSON.stringify(evidence.errors));
   assert(evidence.network.every(url=>url.startsWith(server.base+'/')),'page made no remote asset/API requests');pass('No unhandled browser exceptions or external page asset/API requests');

@@ -450,6 +450,7 @@ jobs:
           node --check static/fisi-style.js
           node --check static/client.js
           node --check browser_acceptance.mjs
+          node browser_acceptance.mjs --self-check
       - name: Build explicit Windows and source packages
         shell: pwsh
         run: |
