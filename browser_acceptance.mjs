@@ -74,7 +74,7 @@ async function page(base,code) {
 async function ready(session) { await until(()=>evaluate(session,`Boolean(document.querySelector('.sidebar [data-route="lab"]'))`),'rendered Fisi navigation'); }
 async function click(session,selector) {
   await send('Page.bringToFront',{},session);
-  const rect=await evaluate(session,`(()=>{const element=document.querySelector(${JSON.stringify(selector)});if(!element)throw Error('Missing selector');element.scrollIntoView({block:'center'});const r=element.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);
+  const rect=await evaluate(session,`(()=>{const element=document.querySelector(${JSON.stringify(selector)});if(!element)throw Error('Missing selector');element.scrollIntoView({block:'center'});const r=element.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,hit=document.elementFromPoint(x,y);if(!hit||!(hit===element||element.contains(hit)))throw Error('Click target blocked by '+(hit?.tagName||'viewport')+'#'+(hit?.id||''));return {x,y};})()`);
   await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...rect},session);
   await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...rect},session);
 }
@@ -91,6 +91,7 @@ async function saved(session,fn) { const before=await revision(session);await fn
 async function navigate(session,view) { await click(session,`.sidebar [data-route="${view}"]`);await until(()=>evaluate(session,`Boolean(document.querySelector('.sidebar [data-route="${view}"].active'))`),'navigation '+view); }
 async function upload(session,selector,files) { const doc=await send('DOM.getDocument',{},session);const node=await send('DOM.querySelector',{nodeId:doc.root.nodeId,selector},session);assert(node.nodeId);await send('DOM.setFileInputFiles',{nodeId:node.nodeId,files},session); }
 async function screenshot(session,name) {
+  await evaluate(session,`new Promise(resolve=>{window.scrollTo(0,0);requestAnimationFrame(()=>requestAnimationFrame(resolve));})`);
   const metrics=await send('Page.getLayoutMetrics',{},session),size=metrics.cssContentSize;
   const clip={x:0,y:0,width:Math.min(size.width,1600),height:Math.min(size.height,6000),scale:1};
   const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip},session);
